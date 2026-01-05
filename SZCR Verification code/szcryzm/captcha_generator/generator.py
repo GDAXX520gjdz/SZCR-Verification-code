@@ -140,11 +140,12 @@ class CaptchaGenerator:
         except (OSError, IOError, AttributeError):
             font = ImageFont.load_default()
 
-        # 绘制每个字符，添加随机旋转和位置偏移
-        char_width = self.width // length
+        # 绘制每个字符，添加轻微旋转和小幅位置偏移（避免遮挡）
+        # 为了防止字符互相遮挡，这里适当增加间距并控制旋转角度
+        char_width = self.width // (length + 1)
         for i, char in enumerate(text):
-            # 创建单个字符图像（增大字符区域以提高可读性）
-            char_size = max(char_width, 50)
+            # 创建单个字符图像（适中字符区域以提高可读性并减少重叠）
+            char_size = max(char_width, 40)
             char_image = Image.new('RGB', (char_size, self.height), color='white')
             char_draw = ImageDraw.Draw(char_image)
 
@@ -164,14 +165,17 @@ class CaptchaGenerator:
             color = (random.randint(50, 100), random.randint(50, 100), random.randint(50, 100))
             char_draw.text((char_x, char_y), char, font=font, fill=color)
 
-            # 随机旋转（减小角度范围）
-            angle = random.randint(-15, 15)
+            # 随机旋转（进一步减小角度范围，避免视觉遮挡感）
+            angle = random.randint(-8, 8)
             rotated_char = char_image.rotate(angle, expand=1, fillcolor='white')
 
             # 计算位置（考虑旋转后的尺寸）
             rotated_width, rotated_height = rotated_char.size
-            x = i * char_width + random.randint(-5, 5)
-            y = random.randint(-5, 5)
+            # 基于索引计算大致中心位置，避免字符互相压在一起
+            x_center = (i + 1) * char_width
+            x = int(x_center - rotated_width / 2)
+            # 垂直方向仅做很小的随机偏移，不再大幅上下漂移
+            y = int((self.height - rotated_height) / 2 + random.randint(-3, 3))
             # 确保不超出边界
             x = max(0, min(x, self.width - rotated_width))
             y = max(0, min(y, self.height - rotated_height))
@@ -179,14 +183,14 @@ class CaptchaGenerator:
             # 粘贴到主图像
             image.paste(rotated_char, (x, y), rotated_char if rotated_char.mode == 'RGBA' else None)
 
-        # 添加复杂背景（在扭曲之前添加，因为draw对象在扭曲后会失效）
-        self._add_complex_background(draw)
+        # 取消遮挡效果（不再添加复杂背景）
+        # self._add_complex_background(draw)  # 已禁用遮挡效果
 
-        # 添加波浪扭曲
+        # 轻微波浪扭曲（降低幅度，保留“困难感”但不至于看不清）
         image = self._apply_wave_distortion(image)
 
-        # 添加轻微高斯模糊（降低模糊程度）
-        image = image.filter(ImageFilter.GaussianBlur(radius=0.3))
+        # 取消模糊，以保证最大清晰度
+        # image = image.filter(ImageFilter.GaussianBlur(radius=0.3))
 
         return text, image
 

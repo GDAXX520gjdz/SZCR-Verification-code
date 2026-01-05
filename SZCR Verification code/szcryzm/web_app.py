@@ -30,6 +30,13 @@ os.makedirs('data/models', exist_ok=True)
 os.makedirs('data/templates', exist_ok=True)
 os.makedirs('data/uploads', exist_ok=True)
 os.makedirs('data/users', exist_ok=True)
+os.makedirs('data/dataset', exist_ok=True)
+
+# 创建数据集目录结构（如果不存在）
+characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+for char in characters:
+    char_folder = os.path.join('data/dataset', char)
+    os.makedirs(char_folder, exist_ok=True)
 
 # 用户系统实例存储（使用字典存储，因为session不能存储对象）
 user_systems = {}
@@ -73,15 +80,25 @@ def save_users(users):
 def init_default_user():
     """初始化默认用户"""
     users = load_users()
-    if 'admin' not in users:
-        users['admin'] = {
-            'password': generate_password_hash('admin123'),
-            'email': 'admin@example.com',
+    # 确保szcr用户存在且是管理员
+    if 'szcr' not in users:
+        users['szcr'] = {
+            'password': generate_password_hash('dbbhs'),
+            'email': 'admin@szcr.com',
             'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'is_admin': True,
             'role': 'admin'
         }
         save_users(users)
+    else:
+        # 如果szcr已存在，确保它是管理员
+        if not users['szcr'].get('is_admin', False) or users['szcr'].get('role') != 'admin':
+            users['szcr']['is_admin'] = True
+            users['szcr']['role'] = 'admin'
+            # 如果密码不是dbbhs，更新密码
+            if not check_password_hash(users['szcr']['password'], 'dbbhs'):
+                users['szcr']['password'] = generate_password_hash('dbbhs')
+            save_users(users)
 
 def is_admin(username):
     """检查用户是否为管理员"""
@@ -101,6 +118,23 @@ def login_required(f):
             # 否则重定向到登录页
             return redirect(url_for('login'))
         return f(*args, **kwargs)
+    return decorated_function
+
+# 普通用户权限装饰器（只允许生成验证码）
+def user_allowed(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user_type = session.get('user_type', 'user')
+        if user_type == 'admin':
+            # 管理员可以使用所有功能
+            return f(*args, **kwargs)
+        # 普通用户只能使用生成验证码功能
+        if request.path == '/api/generate':
+            return f(*args, **kwargs)
+        # 其他功能需要管理员权限
+        if request.path.startswith('/api/'):
+            return jsonify({'error': '此功能需要管理员权限'}), 403
+        return redirect(url_for('dashboard'))
     return decorated_function
 
 # 管理员权限装饰器
@@ -135,17 +169,49 @@ def login():
         data = request.get_json()
         username = data.get('username', '').strip()
         password = data.get('password', '')
+        login_type = data.get('login_type', 'user')  # 获取登录类型
         
         users = load_users()
-        if username in users and check_password_hash(users[username]['password'], password):
+        
+        # 检查用户是否存在
+        if username not in users:
+            return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
+        
+        # 验证密码
+        password_valid = check_password_hash(users[username]['password'], password)
+        
+        # 如果是szcr用户且密码是dbbhs，但哈希不匹配，更新密码
+        if username == 'szcr' and password == 'dbbhs' and not password_valid:
+            users['szcr']['password'] = generate_password_hash('dbbhs')
+            users['szcr']['is_admin'] = True
+            users['szcr']['role'] = 'admin'
+            save_users(users)
+            password_valid = True
+        
+        if password_valid:
+            user_is_admin = is_admin(username)
+            
+            # 验证登录类型权限
+            if login_type == 'admin' and not user_is_admin:
+                return jsonify({'success': False, 'message': '该用户不是管理员，无法以管理员身份登录'}), 403
+            
             session['user_id'] = username
             session['username'] = username
+            session['user_type'] = login_type
+            session['is_admin'] = user_is_admin
             init_user_system()  # 初始化用户系统
-            return jsonify({'success': True, 'message': '登录成功'})
+            
+            # 根据登录类型返回重定向URL
+            redirect_url = '/admin' if login_type == 'admin' else '/dashboard'
+            return jsonify({'success': True, 'message': '登录成功', 'user_type': login_type, 'redirect_to': redirect_url})
         else:
             return jsonify({'success': False, 'message': '用户名或密码错误'}), 401
     
     if 'user_id' in session:
+        # 根据用户类型重定向
+        user_type = session.get('user_type', 'user')
+        if user_type == 'admin':
+            return redirect(url_for('admin_dashboard'))
         return redirect(url_for('dashboard'))
     return render_template('login.html')
 
@@ -191,8 +257,15 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    """主界面"""
-    return render_template('dashboard.html', username=session.get('username', 'User'))
+    """主界面（普通用户和管理员都可以访问）"""
+    user_type = session.get('user_type', 'user')
+    is_admin_user = is_admin(session.get('user_id', ''))
+    
+    # 允许管理员访问dashboard，但显示管理员权限
+    return render_template('dashboard.html', 
+                         username=session.get('username', 'User'),
+                         is_admin=is_admin_user,
+                         user_type=user_type)
 
 # API路由
 @app.route('/api/generate', methods=['POST'])
@@ -236,6 +309,11 @@ def api_generate():
 @login_required
 def api_recognize():
     """识别验证码API"""
+    # 检查权限：只有管理员可以使用识别功能
+    user_id = session.get('user_id', '')
+    if not is_admin(user_id):
+        return jsonify({'error': '此功能需要管理员权限'}), 403
+    
     try:
         data = request.get_json()
         method = data.get('method', 'tesseract')
@@ -248,20 +326,48 @@ def api_recognize():
             return jsonify({'error': '未提供图像'}), 400
         
         # 解码base64图像
-        img_data = base64.b64decode(image_data.split(',')[1])
-        image = Image.open(io.BytesIO(img_data))
+        try:
+            # 处理data URI格式: data:image/png;base64,...
+            if ',' in image_data:
+                img_data = base64.b64decode(image_data.split(',')[1])
+            else:
+                img_data = base64.b64decode(image_data)
+            image = Image.open(io.BytesIO(img_data))
+        except Exception as e:
+            return jsonify({'error': f'图像解码失败: {str(e)}'}), 400
         
         # 识别
-        if method == 'tesseract':
-            result = system['traditional_recognizer'].recognize_with_tesseract(image)
-        elif method == 'template':
-            result = system['traditional_recognizer'].recognize_with_template_matching(image)
-        elif method == 'ml':
-            if system['ml_recognizer'].model is None:
-                return jsonify({'error': '模型未加载，请先训练模型'}), 400
-            result = system['ml_recognizer'].predict(image)
-        else:
-            return jsonify({'error': '无效的识别方法'}), 400
+        result = ""
+        error_msg = None
+        try:
+            if method == 'tesseract':
+                result = system['traditional_recognizer'].recognize_with_tesseract(image)
+                if not result:
+                    error_msg = 'Tesseract识别失败，可能未安装Tesseract OCR或路径未配置'
+            elif method == 'template':
+                # 使用绝对路径确保能找到模板文件夹
+                # web_app.py 在 szcryzm/ 目录下，模板文件夹在 szcryzm/data/templates
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                template_folder = os.path.join(base_dir, 'data', 'templates')
+                result = system['traditional_recognizer'].recognize_with_template_matching(image, template_folder)
+                if not result:
+                    error_msg = '模板匹配失败，可能模板文件夹不存在或未找到匹配模板'
+            elif method == 'ml':
+                if system['ml_recognizer'].model is None:
+                    return jsonify({'error': '模型未加载，请先训练模型'}), 400
+                result = system['ml_recognizer'].predict(image)
+                if not result:
+                    error_msg = '机器学习识别失败，可能无法分割字符或模型预测出错'
+            else:
+                return jsonify({'error': '无效的识别方法'}), 400
+        except Exception as e:
+            import traceback
+            error_msg = f'识别过程出错: {str(e)}'
+            print(f"识别错误: {traceback.format_exc()}")
+        
+        # 如果识别失败，返回错误
+        if not result and error_msg:
+            return jsonify({'error': error_msg, 'result': ''}), 400
         
         # 验证结果
         correct_text = system.get('current_captcha_text', '')
@@ -283,10 +389,11 @@ def api_recognize():
             'match': success
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
 @app.route('/api/validate', methods=['POST'])
-@login_required
+@admin_required
 def api_validate():
     """验证用户输入API"""
     try:
@@ -318,7 +425,7 @@ def api_validate():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/batch_generate', methods=['POST'])
-@login_required
+@admin_required
 def api_batch_generate():
     """批量生成验证码API"""
     try:
@@ -357,7 +464,7 @@ def api_batch_generate():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/history', methods=['GET'])
-@login_required
+@admin_required
 def api_history():
     """获取历史记录API"""
     try:
@@ -371,7 +478,7 @@ def api_history():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/statistics', methods=['GET'])
-@login_required
+@admin_required
 def api_statistics():
     """获取统计信息API"""
     try:
@@ -388,31 +495,83 @@ def api_statistics():
 @login_required
 def api_train():
     """训练模型API"""
+    # 检查权限：只有管理员可以训练模型
+    user_id = session.get('user_id', '')
+    if not is_admin(user_id):
+        return jsonify({'error': '此功能需要管理员权限'}), 403
+    
     try:
         data = request.get_json()
         dataset_path = data.get('dataset_path', 'data/dataset')
         model_type = data.get('model_type', 'knn')
         
+        # 检查数据集路径
+        if not dataset_path:
+            return jsonify({'error': '数据集路径不能为空'}), 400
+        
         if not os.path.exists(dataset_path):
-            return jsonify({'error': f'数据集路径不存在: {dataset_path}'}), 400
+            return jsonify({
+                'error': f'数据集路径不存在: {dataset_path}',
+                'hint': '数据集应按照字符分类组织，例如: data/dataset/A/, data/dataset/B/, ...'
+            }), 400
+        
+        # 检查数据集是否为空
+        has_data = False
+        characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        folders_with_data = []
+        
+        for char in characters:
+            char_folder = os.path.join(dataset_path, char)
+            if os.path.exists(char_folder):
+                files = [f for f in os.listdir(char_folder) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+                if files:
+                    has_data = True
+                    folders_with_data.append(f"{char}({len(files)}个文件)")
+        
+        if not has_data:
+            return jsonify({
+                'error': '数据集为空，未找到训练数据',
+                'hint': f'数据集应按照字符分类组织，例如: {dataset_path}/A/, {dataset_path}/B/, ... 每个文件夹包含该字符的图片文件(.png, .jpg, .jpeg)',
+                'detail': f'当前数据集路径: {os.path.abspath(dataset_path)}，请确保每个字符文件夹包含至少一张图片'
+            }), 400
+        
+        # 提供数据集统计信息
+        dataset_info = f"找到数据的文件夹: {', '.join(folders_with_data[:10])}"  # 只显示前10个
+        if len(folders_with_data) > 10:
+            dataset_info += f" 等共{len(folders_with_data)}个文件夹"
         
         system = init_user_system()
         system['ml_recognizer'] = MLCaptchaRecognizer(model_type)
-        accuracy = system['ml_recognizer'].train(dataset_path)
         
-        if accuracy > 0:
+        try:
+            accuracy = system['ml_recognizer'].train(dataset_path)
+            
+            if accuracy > 0:
+                return jsonify({
+                    'success': True,
+                    'accuracy': accuracy,
+                    'message': f'训练完成，准确率: {accuracy:.2%}',
+                    'dataset_info': dataset_info if 'dataset_info' in locals() else ''
+                })
+            else:
+                return jsonify({
+                    'error': '训练失败，准确率为0',
+                    'hint': '请检查数据集格式和内容是否正确'
+                }), 500
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"训练错误: {error_trace}")
             return jsonify({
-                'success': True,
-                'accuracy': accuracy,
-                'message': f'训练完成，准确率: {accuracy:.2%}'
-            })
-        else:
-            return jsonify({'error': '训练失败，请检查数据集'}), 500
+                'error': f'训练过程出错: {str(e)}',
+                'hint': '请检查数据集格式是否正确，确保每个字符文件夹包含有效的图片文件'
+            }), 500
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        import traceback
+        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
 
 @app.route('/api/clear_history', methods=['POST'])
-@login_required
+@admin_required
 def api_clear_history():
     """清空历史记录API"""
     try:
@@ -427,6 +586,12 @@ def api_clear_history():
 @admin_required
 def admin_dashboard():
     """管理员主界面"""
+    user_type = session.get('user_type', 'user')
+    
+    # 如果不是管理员身份登录，重定向到普通用户界面
+    if user_type != 'admin':
+        return redirect(url_for('dashboard'))
+    
     return render_template('admin.html', username=session.get('username', 'Admin'))
 
 @app.route('/api/admin/users', methods=['GET'])

@@ -62,6 +62,11 @@ async function recognizeCaptcha(method) {
         
         const data = await response.json();
         
+        if (!response.ok) {
+            showMessage(data.error || `识别失败: ${response.status} ${response.statusText}`, 'error');
+            return;
+        }
+        
         if (data.success) {
             const resultElement = document.getElementById('recognitionResult');
             resultElement.textContent = data.result;
@@ -384,6 +389,11 @@ async function startTrain() {
         });
         
         const data = await response.json();
+        
+        if (!response.ok) {
+            showMessage(data.error || `训练失败: ${response.status} ${response.statusText}`, 'error');
+            return;
+        }
         
         if (data.success) {
             showMessage(`训练完成！准确率: ${(data.accuracy * 100).toFixed(2)}%`, 'success');

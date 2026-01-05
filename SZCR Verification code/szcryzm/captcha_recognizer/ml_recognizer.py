@@ -149,6 +149,10 @@ class MLCaptchaRecognizer:
         # 预处理图像
         if isinstance(image, str):
             img = cv2.imread(image)
+        elif isinstance(image, Image.Image):
+            # 如果是PIL图像，转换为numpy数组
+            import numpy as np
+            img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         else:
             img = image
 

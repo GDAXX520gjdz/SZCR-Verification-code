@@ -1,0 +1,42 @@
+[
+  {
+    "timestamp": "2026-01-05 16:17:37",
+    "captcha": "LKYYP",
+    "recognized": "LKYYP",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-05 16:18:08",
+    "captcha": "VX9VO",
+    "recognized": "90",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-05 16:18:13",
+    "captcha": "Q1R52",
+    "recognized": "2",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-05 16:20:37",
+    "captcha": "8403F",
+    "recognized": "6405",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-05 16:26:15",
+    "captcha": "PUEOH",
+    "recognized": "PUECH",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  }
+]

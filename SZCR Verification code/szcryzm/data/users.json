@@ -5,10 +5,17 @@
     "created_at": "2026-01-05 00:33:05"
   },
   "szcr": {
-    "password": "scrypt:32768:8:1$Jzqm0UulWAAxXKzx$d9ff4fa5b37d2d33230a6228aedbe5d46e9cab4b84c02114572d46132362fcaef2062c98334a4f1483a82983f490bae65e293d5677438f2bfd32197a82822b23",
+    "password": "scrypt:32768:8:1$UzGfDYATkccKUDl8$7881683238824a13ad95dbaa6c75025faabae789ee938c3b74437b4d8a7e3cc9916e6b31c586b9a0583e923fe9d8d306f56bbf734bc3857c5d5566ac00ddf6c7",
     "email": "",
     "created_at": "2026-01-05 00:57:13",
-    "is_admin": false,
-    "role": "user"
+    "is_admin": true,
+    "role": "admin"
+  },
+  "Asuka": {
+    "password": "scrypt:32768:8:1$Gsidkzb9T3xnAbn7$f9e1247f16345040552392ea5c514217d56c2404052f3b1bbafa62aabc50f6e0b3e9402a4ff44f825758de12e2d4bbe22da47ea70483fac1463691f0870f6e1e",
+    "email": "",
+    "created_at": "2026-01-05 15:06:06",
+    "is_admin": true,
+    "role": "admin"
   }
 }

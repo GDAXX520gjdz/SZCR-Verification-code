@@ -2,6 +2,7 @@
 document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     
+    const loginType = document.getElementById('loginType').value;
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const messageDiv = document.getElementById('message');
@@ -17,7 +18,7 @@ document.getElementById('loginForm')?.addEventListener('submit', async function(
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, login_type: loginType })
         });
         
         const data = await response.json();
@@ -25,7 +26,9 @@ document.getElementById('loginForm')?.addEventListener('submit', async function(
         if (data.success) {
             showMessage('登录成功，正在跳转...', 'success');
             setTimeout(() => {
-                window.location.href = '/dashboard';
+                // 使用服务器返回的重定向URL
+                const redirectUrl = data.redirect_to || (loginType === 'admin' ? '/admin' : '/dashboard');
+                window.location.href = redirectUrl;
             }, 500);
         } else {
             showMessage(data.message || '登录失败', 'error');
