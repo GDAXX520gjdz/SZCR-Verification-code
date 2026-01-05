@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员控制台 - 验证码系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-shield-alt"></i>
+                <span>管理员控制台</span>
+            </div>
+            <div class="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-link">
+                    <i class="fas fa-home"></i> 返回主页
+                </a>
+                <span class="nav-user">
+                    <i class="fas fa-user-shield"></i> {{ username }}
+                </span>
+                <a href="{{ url_for('logout') }}" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 顶部导航栏（跳转式） -->
+    <div class="admin-top-nav">
+        <div class="top-nav-container">
+            <a href="#users" class="top-nav-item active" onclick="showSection('users'); return false;">
+                <i class="fas fa-users"></i> 用户管理
+            </a>
+            <a href="#history" class="top-nav-item" onclick="showSection('history'); return false;">
+                <i class="fas fa-history"></i> 历史记录
+            </a>
+            <a href="#statistics" class="top-nav-item" onclick="showSection('statistics'); return false;">
+                <i class="fas fa-chart-line"></i> 系统统计
+            </a>
+            <a href="#storage" class="top-nav-item" onclick="showSection('storage'); return false;">
+                <i class="fas fa-database"></i> 存储管理
+            </a>
+            <a href="#logs" class="top-nav-item" onclick="showSection('logs'); return false;">
+                <i class="fas fa-file-alt"></i> 系统日志
+            </a>
+            <a href="#cleanup" class="top-nav-item" onclick="showSection('cleanup'); return false;">
+                <i class="fas fa-broom"></i> 数据清理
+            </a>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="admin-container">
+        <!-- 内容区域 -->
+        <div class="admin-content">
+            <!-- 用户管理 -->
+            <div id="users-section" class="admin-section active">
+                <div class="section-header">
+                    <h2><i class="fas fa-users"></i> 用户管理</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-success" onclick="showAddUserModal()">
+                            <i class="fas fa-user-plus"></i> 添加用户
+                        </button>
+                        <button class="btn btn-primary" onclick="refreshUsers()">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="usersTable">
+                                <thead>
+                                    <tr>
+                                        <th>用户名</th>
+                                        <th>邮箱</th>
+                                        <th>角色</th>
+                                        <th>注册时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 40px;">
+                                            <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史记录 -->
+            <div id="history-section" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> 历史记录</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="historyUserFilter" class="form-control" style="width: 200px;" onchange="loadHistory()">
+                            <option value="">所有用户</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadHistory()">
+                            <i class="fas fa-sync-alt"></i> 刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="historyTable">
+                                <thead>
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>用户</th>
+                                        <th>验证码</th>
+                                        <th>识别结果</th>
+                                        <th>方法</th>
+                                        <th>难度</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTableBody">
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; padding: 40px;">
+                                            <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统统计 -->
+            <div id="statistics-section" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-line"></i> 系统统计</h2>
+                    <button class="btn btn-primary" onclick="refreshStatistics()">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #667eea;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalUsers">-</h3>
+                            <p>总用户数</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #10b981;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalRecords">-</h3>
+                            <p>总记录数</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #f59e0b;">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="overallAccuracy">-</h3>
+                            <p>总体准确率</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #ef4444;">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="adminCount">-</h3>
+                            <p>管理员数量</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <h3>最近活动</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="activityTable">
+                                <thead>
+                                    <tr>
+                                        <th>用户</th>
+                                        <th>时间</th>
+                                        <th>操作</th>
+                                        <th>方法</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activityTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 40px;">
+                                            <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 存储管理 -->
+            <div id="storage-section" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-database"></i> 存储管理</h2>
+                    <button class="btn btn-primary" onclick="refreshStorage()">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+                <div class="storage-grid">
+                    <div class="storage-card">
+                        <div class="storage-header">
+                            <i class="fas fa-image"></i>
+                            <h3>验证码文件</h3>
+                        </div>
+                        <div class="storage-content">
+                            <p class="storage-count">文件数: <span id="captchaFiles">-</span></p>
+                            <p class="storage-size">大小: <span id="captchaSize">-</span> MB</p>
+                        </div>
+                    </div>
+                    <div class="storage-card">
+                        <div class="storage-header">
+                            <i class="fas fa-brain"></i>
+                            <h3>模型文件</h3>
+                        </div>
+                        <div class="storage-content">
+                            <p class="storage-count">文件数: <span id="modelFiles">-</span></p>
+                            <p class="storage-size">大小: <span id="modelSize">-</span> MB</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 系统日志 -->
+            <div id="logs-section" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-file-alt"></i> 系统日志</h2>
+                    <button class="btn btn-primary" onclick="refreshLogs()">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="logsTable">
+                                <thead>
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>用户</th>
+                                        <th>操作</th>
+                                        <th>方法</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logsTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 40px;">
+                                            <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据清理 -->
+            <div id="cleanup-section" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-broom"></i> 数据清理</h2>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="cleanup-options">
+                            <div class="cleanup-item">
+                                <div class="cleanup-info">
+                                    <h3><i class="fas fa-image"></i> 清理验证码文件</h3>
+                                    <p>删除所有生成的验证码图片文件</p>
+                                </div>
+                                <button class="btn btn-danger" onclick="cleanupData('captchas')">
+                                    <i class="fas fa-trash"></i> 清理
+                                </button>
+                            </div>
+                            <div class="cleanup-item">
+                                <div class="cleanup-info">
+                                    <h3><i class="fas fa-history"></i> 清理历史记录</h3>
+                                    <p>删除所有用户的操作历史记录</p>
+                                </div>
+                                <button class="btn btn-danger" onclick="cleanupData('history')">
+                                    <i class="fas fa-trash"></i> 清理
+                                </button>
+                            </div>
+                            <div class="cleanup-item">
+                                <div class="cleanup-info">
+                                    <h3><i class="fas fa-brain"></i> 清理模型文件</h3>
+                                    <p>删除所有训练的机器学习模型文件</p>
+                                </div>
+                                <button class="btn btn-danger" onclick="cleanupData('models')">
+                                    <i class="fas fa-trash"></i> 清理
+                                </button>
+                            </div>
+                            <div class="cleanup-item">
+                                <div class="cleanup-info">
+                                    <h3><i class="fas fa-exclamation-triangle"></i> 清理所有数据</h3>
+                                    <p>危险操作：删除所有上述数据（验证码、历史、模型）</p>
+                                </div>
+                                <button class="btn btn-danger" onclick="cleanupData('all')">
+                                    <i class="fas fa-exclamation-triangle"></i> 全部清理
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户编辑/添加模态框 -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <div class="modal-body">
+                <h2>编辑用户</h2>
+                <form id="editUserForm">
+                    <div class="form-group">
+                        <label>用户名:</label>
+                        <input type="text" id="editUsername" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱:</label>
+                        <input type="email" id="editEmail" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>角色:</label>
+                        <select id="editRole" class="form-control">
+                            <option value="user">普通用户</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label id="passwordLabel">新密码 (留空不修改):</label>
+                        <input type="password" id="editPassword" class="form-control">
+                    </div>
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-primary" onclick="saveUserEdit()">保存</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载提示 -->
+    <div id="loading" class="loading">
+        <div class="spinner"></div>
+        <p>处理中...</p>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
+

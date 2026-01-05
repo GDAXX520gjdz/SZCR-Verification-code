@@ -1,0 +1,14 @@
+{
+  "admin": {
+    "password": "scrypt:32768:8:1$FAhP0P0MgyLBGVRx$60311ed11280deb583b012d8005c6de208ada566116014f1b0e7d1ec804153db46b214477e64a11d71e9a91fa9fcb911a6ee3df156a2f9894429c990b8e8ee5f",
+    "email": "admin@example.com",
+    "created_at": "2026-01-05 00:33:05"
+  },
+  "szcr": {
+    "password": "scrypt:32768:8:1$Jzqm0UulWAAxXKzx$d9ff4fa5b37d2d33230a6228aedbe5d46e9cab4b84c02114572d46132362fcaef2062c98334a4f1483a82983f490bae65e293d5677438f2bfd32197a82822b23",
+    "email": "",
+    "created_at": "2026-01-05 00:57:13",
+    "is_admin": false,
+    "role": "user"
+  }
+}

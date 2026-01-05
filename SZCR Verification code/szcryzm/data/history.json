@@ -1,0 +1,186 @@
+[
+  {
+    "timestamp": "2026-01-04 11:33:51",
+    "captcha": "FXF89",
+    "recognized": "?",
+    "difficulty": "unknown",
+    "method": "template",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:34:06",
+    "captcha": "FXF89",
+    "recognized": "",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:34:08",
+    "captcha": "FXF89",
+    "recognized": "?",
+    "difficulty": "unknown",
+    "method": "template",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:34:58",
+    "captcha": "WRNKZ",
+    "recognized": "wenkz",
+    "difficulty": "user_input",
+    "method": "manual",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:35:09",
+    "captcha": "WRNKZ",
+    "recognized": "wrnkz",
+    "difficulty": "user_input",
+    "method": "manual",
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-04 11:35:21",
+    "captcha": "YBZ3UW",
+    "recognized": "ybz3w",
+    "difficulty": "user_input",
+    "method": "manual",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:38:00",
+    "captcha": "CR18W",
+    "recognized": "",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:38:07",
+    "captcha": "CR18W",
+    "recognized": "?",
+    "difficulty": "unknown",
+    "method": "template",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:41:14",
+    "captcha": "UT0GX",
+    "recognized": "?",
+    "difficulty": "unknown",
+    "method": "template",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:42:16",
+    "captcha": "UT0GX",
+    "recognized": "",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:42:25",
+    "captcha": "UT0GX",
+    "recognized": "ut0gx",
+    "difficulty": "user_input",
+    "method": "manual",
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-04 11:44:25",
+    "captcha": "5E3DJY",
+    "recognized": "?",
+    "difficulty": "unknown",
+    "method": "template",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 11:44:39",
+    "captcha": "5E3DJY",
+    "recognized": "",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 15:59:07",
+    "captcha": "R3MQA",
+    "recognized": "R3MQA",
+    "difficulty": "user_input",
+    "method": "manual",
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-04 15:59:11",
+    "captcha": "R3MQA",
+    "recognized": "",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 15:59:13",
+    "captcha": "R3MQA",
+    "recognized": "?",
+    "difficulty": "unknown",
+    "method": "template",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 15:59:34",
+    "captcha": "PUHI",
+    "recognized": "?",
+    "difficulty": "unknown",
+    "method": "template",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 15:59:53",
+    "captcha": "PUHI",
+    "recognized": "PUHI",
+    "difficulty": "user_input",
+    "method": "manual",
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-04 15:59:54",
+    "captcha": "PUHI",
+    "recognized": "?",
+    "difficulty": "unknown",
+    "method": "template",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 16:00:03",
+    "captcha": "PUHI",
+    "recognized": "PUHI",
+    "difficulty": "user_input",
+    "method": "manual",
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-04 16:28:36",
+    "captcha": "Q0AJ8",
+    "recognized": "",
+    "difficulty": "unknown",
+    "method": "tesseract",
+    "success": false
+  },
+  {
+    "timestamp": "2026-01-04 16:28:54",
+    "captcha": "Q0AJ8",
+    "recognized": "Q0AJ8",
+    "difficulty": "user_input",
+    "method": "manual",
+    "success": true
+  },
+  {
+    "timestamp": "2026-01-04 21:11:26",
+    "captcha": "SYBVR",
+    "recognized": "sybvr",
+    "difficulty": "user_input",
+    "method": "manual",
+    "success": true
+  }
+]
